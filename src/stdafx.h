@@ -112,38 +112,32 @@
 #	include <alloca.h>
 #endif
 
+#define FINAL final // C++11
+
+#if __has_cpp_attribute(fallthrough)
+#	define FALLTHROUGH [[fallthrough]]
+#else
+#	define FALLTHROUGH
+#endif
+
+#if __has_cpp_attribute(noreturn)
+#	define NORETURN [[noreturn]]
+#else
+#	define NORETURN
+#endif
+
 /* Stuff for GCC */
-#if defined(__GNUC__) || defined(__clang__)
-#	define NORETURN __attribute__ ((noreturn))
+#if defined(__GNUC__) || (defined(__clang__) && !defined(_MSC_VER))
 #	define CDECL
 #	define __int64 long long
 	/* Warn about functions using 'printf' format syntax. First argument determines which parameter
 	 * is the format string, second argument is start of values passed to printf. */
 #	define WARN_FORMAT(string, args) __attribute__ ((format (printf, string, args)))
-#	if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)
-#		define FINAL final
-#	else
-#		define FINAL
-#	endif
-
-	/* Use fallthrough attribute where supported */
-#	if __GNUC__ >= 7
-#		if __cplusplus > 201402L // C++17
-#			define FALLTHROUGH [[fallthrough]]
-#		else
-#			define FALLTHROUGH __attribute__((fallthrough))
-#		endif
-#	else
-#		define FALLTHROUGH
-#	endif
 #endif /* __GNUC__ || __clang__ */
 
 #if defined(__WATCOMC__)
-#	define NORETURN
 #	define CDECL
 #	define WARN_FORMAT(string, args)
-#	define FINAL
-#	define FALLTHROUGH
 #	include <malloc.h>
 #endif /* __WATCOMC__ */
 
@@ -189,25 +183,12 @@
 #	endif
 
 #	include <malloc.h> // alloca()
-#	define NORETURN __declspec(noreturn)
 #	if (_MSC_VER < 1900)
 #		define inline __forceinline
 #	endif
 
 #	define CDECL _cdecl
 #	define WARN_FORMAT(string, args)
-#	ifndef __clang__
-#		define FINAL sealed
-#	else
-#		define FINAL
-#	endif
-
-	/* fallthrough attribute, VS 2017 */
-#	if (_MSC_VER >= 1910)
-#		define FALLTHROUGH [[fallthrough]]
-#	else
-#		define FALLTHROUGH
-#	endif
 
 #	if defined(_WIN32) && !defined(_WIN64)
 #		if !defined(_W64)
@@ -416,8 +397,8 @@ static_assert(SIZE_MAX >= UINT32_MAX);
 #	define unlikely(x) (x)
 #endif /* __GNUC__ || __clang__ */
 
-void NORETURN CDECL usererror(const char *str, ...) WARN_FORMAT(1, 2);
-void NORETURN CDECL error(const char *str, ...) WARN_FORMAT(1, 2);
+NORETURN void CDECL usererror(const char *str, ...) WARN_FORMAT(1, 2);
+NORETURN void CDECL error(const char *str, ...) WARN_FORMAT(1, 2);
 #define NOT_REACHED() error("NOT_REACHED triggered at line %i of %s", __LINE__, __FILE__)
 
 /* For non-debug builds with assertions enabled use the special assertion handler. */

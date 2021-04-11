@@ -138,7 +138,7 @@ struct LanguageWriter {
 
 void CDECL strgen_warning(const char *s, ...) WARN_FORMAT(1, 2);
 void CDECL strgen_error(const char *s, ...) WARN_FORMAT(1, 2);
-void NORETURN CDECL strgen_fatal(const char *s, ...) WARN_FORMAT(1, 2);
+NORETURN void CDECL strgen_fatal(const char *s, ...) WARN_FORMAT(1, 2);
 char *ParseWord(char **buf);
 
 extern const char *_file;

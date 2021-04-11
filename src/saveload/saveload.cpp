@@ -323,7 +323,7 @@ static void SlNullPointers()
  * @note This function does never return as it throws an exception to
  *       break out of all the saveload code.
  */
-void NORETURN SlError(StringID string, const char *extra_msg)
+NORETURN void SlError(StringID string, const char *extra_msg)
 {
 	/* Distinguish between loading into _load_check_data vs. normal save/load. */
 	if (_sl.action == SLA_LOAD_CHECK) {
@@ -355,7 +355,7 @@ void NORETURN SlError(StringID string, const char *extra_msg)
  * @note This function does never return as it throws an exception to
  *       break out of all the saveload code.
  */
-void NORETURN SlErrorCorrupt(const char *msg)
+NORETURN void SlErrorCorrupt(const char *msg)
 {
 	SlError(STR_GAME_SAVELOAD_ERROR_BROKEN_SAVEGAME, msg);
 }
@@ -367,7 +367,7 @@ void NORETURN SlErrorCorrupt(const char *msg)
  * @note This function does never return as it throws an exception to
  *       break out of all the saveload code.
  */
-void NORETURN SlErrorCorruptFmt(const char *format, ...)
+NORETURN void SlErrorCorruptFmt(const char *format, ...)
 {
 	va_list ap;
 	char msg[256];
