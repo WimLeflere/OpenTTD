@@ -123,6 +123,7 @@ jobs:
       shell: bash
       run: |
         vcpkg install --triplet=${{ matrix.arch }}-windows-static \
+          catch2 \
           liblzma \
           libpng \
           lzo \
@@ -176,3 +177,28 @@ jobs:
       run: |
         cd ${GITHUB_WORKSPACE}/build
         ctest
+
+    - name: Build Tests
+      shell: bash
+      run: |
+        mkdir test
+        cd test
+
+        echo "::group::CMake"
+        cmake .. \
+          -GNinja \
+          -DVCPKG_TARGET_TRIPLET=${{ matrix.arch }}-windows-static \
+          -DCMAKE_TOOLCHAIN_FILE="c:\vcpkg\scripts\buildsystems\vcpkg.cmake" \
+          -DTEST=True
+          # EOF
+        echo "::endgroup::"
+
+        echo "::group::Build"
+        cmake --build .
+        echo "::endgroup::"
+
+    - name: Unit Tests
+      shell: bash
+      run: |
+        cd ${GITHUB_WORKSPACE}/test
+        openttd.exe
