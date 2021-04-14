@@ -123,7 +123,6 @@ jobs:
       shell: bash
       run: |
         vcpkg install --triplet=${{ matrix.arch }}-windows-static \
-          catch2 \
           liblzma \
           libpng \
           lzo \
@@ -178,11 +177,62 @@ jobs:
         cd ${GITHUB_WORKSPACE}/build
         ctest
 
-    - name: Build Tests
+  windows-test:
+    name: Windows Test
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        arch: [x64]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Prepare cache key
+      id: key
+      shell: powershell
+      run: |
+        # Work around caching failure with GNU tar
+        New-Item -Type Junction -Path vcpkg -Target c:\vcpkg
+
+        Write-Output "::set-output name=image::$env:ImageOS-$env:ImageVersion"
+
+    - name: Enable vcpkg cache
+      uses: actions/cache@v2
+      with:
+        path: vcpkg/installed
+        key: ${{ steps.key.outputs.image }}-vcpkg-${{ matrix.arch }}-0 # Increase the number whenever dependencies are modified
+        restore-keys: |
+          ${{ steps.key.outputs.image }}-vcpkg-${{ matrix.arch }}
+
+    - name: Prepare vcpkg
       shell: bash
       run: |
-        mkdir test
-        cd test
+        vcpkg install --triplet=${{ matrix.arch }}-windows-static \
+          catch2 \
+          liblzma \
+          libpng \
+          lzo \
+          zlib \
+          # EOF
+
+    - name: Install MSVC problem matcher
+      uses: ammaraskar/msvc-problem-matcher@master
+
+    - name: Configure developer command prompt for ${{ matrix.arch }}
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{ matrix.arch }}
+
+    - name: Build
+      shell: bash
+      run: |
+        mkdir build
+        cd build
 
         echo "::group::CMake"
         cmake .. \
@@ -196,12 +246,15 @@ jobs:
         echo "::group::Build"
         cmake --build .
         echo "::endgroup::"
-        ls -l
 
-    - name: Unit Tests
+    - name: Test
       shell: bash
       run: |
-        ls -l
-        cd ${GITHUB_WORKSPACE}/test
-        ls -l
-        ./openttd.exe
+        cd ${GITHUB_WORKSPACE}/build
+        ./openttd.exe --reporter junit --out openttd_test_results.xml
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action/composite@v1
+      if: always()
+      with:
+        files: build/openttd_test_results.xml
