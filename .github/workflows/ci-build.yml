@@ -204,4 +204,4 @@ jobs:
         ls -l
         cd ${GITHUB_WORKSPACE}/test
         ls -l
-        openttd.exe
+        ./openttd.exe
