@@ -32,13 +32,16 @@ jobs:
       run: |
         mkdir build-host
         cd build-host
+
         echo "::group::CMake"
         cmake .. -DOPTION_TOOLS_ONLY=ON
         echo "::endgroup::"
+
         echo "::group::Build"
         echo "Running on $(nproc) cores"
         cmake --build . -j $(nproc) --target tools
         echo "::endgroup::"
+
     - name: Install GCC problem matcher
       uses: ammaraskar/gcc-problem-matcher@master
 
@@ -46,9 +49,11 @@ jobs:
       run: |
         mkdir build
         cd build
+
         echo "::group::CMake"
         emcmake cmake .. -DHOST_BINARY_DIR=../build-host
         echo "::endgroup::"
+
         echo "::group::Build"
         echo "Running on $(nproc) cores"
         cmake --build . -j $(nproc)
