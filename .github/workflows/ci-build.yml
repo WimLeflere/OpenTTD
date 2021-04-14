@@ -45,7 +45,7 @@ jobs:
           liblzo2-dev \
           ${{ matrix.libsdl }} \
           zlib1g-dev \
-          catch2
+          catch
           # EOF
         echo "::endgroup::"
       env:
