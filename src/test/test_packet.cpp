@@ -32,24 +32,24 @@ TEST_CASE("Packet")
 
 	SECTION("Send_uint8")
 	{
-		packet.Send_uint8(0xAB);
-		packet.Send_uint8(0xFF);
+		packet.Send_uint8(0xCD);
+		packet.Send_uint8(0xEF);
 
 		CHECK(packet.size == 5);
-		CHECK(*++newData == 0xAB);
-		CHECK(*++newData == 0xFF);
+		CHECK(*++newData == 0xCD);
+		CHECK(*++newData == 0xEF);
 	}
 
 	SECTION("Send_uint16")
 	{
-		packet.Send_uint16(0xABCD);
-		packet.Send_uint16(0xF00F);
+		packet.Send_uint16(0x89AB);
+		packet.Send_uint16(0xCDEF);
 
 		CHECK(packet.size == 7);
-		CHECK(*++newData == 0xCD);
 		CHECK(*++newData == 0xAB);
-		CHECK(*++newData == 0x0F);
-		CHECK(*++newData == 0xF0);
+		CHECK(*++newData == 0x89);
+		CHECK(*++newData == 0xEF);
+		CHECK(*++newData == 0xCD);
 	}
 
 	SECTION("Send_uint32")
@@ -78,16 +78,19 @@ TEST_CASE("Packet")
 		CHECK(*++newData == 0x01);
 	}
 
-	SECTION("Send_string")
+	SECTION("Send_string - empty")
 	{
 		packet.Send_string("");
 
 		CHECK(packet.size == 4);
 		CHECK(*++newData == '\0');
+	}
 
+	SECTION("Send_string")
+	{
 		packet.Send_string("openttd");
 
-		CHECK(packet.size == 12);
+		CHECK(packet.size == 11);
 		CHECK(*++newData == 'o');
 		CHECK(*++newData == 'p');
 		CHECK(*++newData == 'e');
@@ -96,10 +99,13 @@ TEST_CASE("Packet")
 		CHECK(*++newData == 't');
 		CHECK(*++newData == 'd');
 		CHECK(*++newData == '\0');
+	}
 
+	SECTION("Send_string - null character")
+	{
 		packet.Send_string("open\0ttd");
 
-		CHECK(packet.size == 17);
+		CHECK(packet.size == 8);
 		CHECK(*++newData == 'o');
 		CHECK(*++newData == 'p');
 		CHECK(*++newData == 'e');
