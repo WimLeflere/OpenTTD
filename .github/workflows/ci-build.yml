@@ -96,7 +96,8 @@ jobs:
         echo "::group::CMake"
         cmake .. \
           ${{ matrix.extra-cmake-parameters }} \
-          -DTEST=True
+          -DTEST=True \
+          # EOF
         echo "::endgroup::"
 
         echo "::group::Build"
@@ -114,6 +115,119 @@ jobs:
       if: always()
       with:
         name: Unit Test Results ${{ matrix.compiler }} ${{ matrix.cxxcompiler }}
+        path: test/openttd_test_results.xml
+
+  macos:
+    name: Mac OS
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - arch: x64
+          full_arch: x86_64
+
+    runs-on: macos-latest
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 10.9
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Prepare cache key
+      id: key
+      run: |
+        echo "::set-output name=image::$ImageOS-$ImageVersion"
+
+    - name: Enable vcpkg cache
+      uses: actions/cache@v2
+      with:
+        path: /usr/local/share/vcpkg/installed
+        key: ${{ steps.key.outputs.image }}-vcpkg-${{ matrix.arch }}-0 # Increase the number whenever dependencies are modified
+        restore-keys: |
+          ${{ steps.key.outputs.image }}-vcpkg-${{ matrix.arch }}
+
+    - name: Prepare vcpkg
+      run: |
+        vcpkg install --triplet=${{ matrix.arch }}-osx \
+          liblzma \
+          libpng \
+          lzo \
+          zlib \
+          catch2 \
+          # EOF
+
+    - name: Install OpenGFX
+      run: |
+        mkdir -p ~/Documents/OpenTTD/baseset
+        cd ~/Documents//OpenTTD/baseset
+
+        echo "::group::Download OpenGFX"
+        curl -L https://cdn.openttd.org/opengfx-releases/0.6.0/opengfx-0.6.0-all.zip -o opengfx-all.zip
+        echo "::endgroup::"
+
+        echo "::group::Unpack OpenGFX"
+        unzip opengfx-all.zip
+        echo "::endgroup::"
+
+        rm -f opengfx-all.zip
+
+    - name: Install GCC problem matcher
+      uses: ammaraskar/gcc-problem-matcher@master
+
+    - name: Build Game
+      run: |
+        mkdir build
+        cd build
+
+        echo "::group::CMake"
+        cmake ${GITHUB_WORKSPACE} \
+          -DCMAKE_OSX_ARCHITECTURES=${{ matrix.full_arch }} \
+          -DVCPKG_TARGET_TRIPLET=${{ matrix.arch }}-osx \
+          -DCMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake \
+          # EOF
+        echo "::endgroup::"
+
+        echo "::group::Build"
+        echo "Running on $(sysctl -n hw.logicalcpu) cores"
+        cmake --build . -j $(sysctl -n hw.logicalcpu)
+        echo "::endgroup::"
+
+    - name: Regression Test
+      run: |
+        cd build
+        ctest -j $(sysctl -n hw.logicalcpu)
+
+    - name: Build Unit Test
+      run: |
+        mkdir test
+        cd test
+
+        echo "::group::CMake"
+        cmake ${GITHUB_WORKSPACE} \
+          -DCMAKE_OSX_ARCHITECTURES=${{ matrix.full_arch }} \
+          -DVCPKG_TARGET_TRIPLET=${{ matrix.arch }}-osx \
+          -DCMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake \
+          -DTEST=True \
+          # EOF
+        echo "::endgroup::"
+
+        echo "::group::Build"
+        echo "Running on $(sysctl -n hw.logicalcpu) cores"
+        cmake --build . -j $(sysctl -n hw.logicalcpu)
+        echo "::endgroup::"
+
+    - name: Unit Test
+      run: |
+        cd test
+        ./openttd --reporter junit --out openttd_test_results.xml
+
+    - name: Upload Unit Test Results Artifact
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: Unit Test Results Mac OS ${{ matrix.full_arch }}
         path: test/openttd_test_results.xml
 
   windows:
