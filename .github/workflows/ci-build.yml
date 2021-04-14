@@ -196,9 +196,12 @@ jobs:
         echo "::group::Build"
         cmake --build .
         echo "::endgroup::"
+        ls -l
 
     - name: Unit Tests
       shell: bash
       run: |
+        ls -l
         cd ${GITHUB_WORKSPACE}/test
+        ls -l
         openttd.exe
