@@ -21,7 +21,7 @@ jobs:
           cxxcompiler: clang++
           libsdl: libsdl2-dev
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       CC: ${{ matrix.compiler }}
       CXX: ${{ matrix.cxxcompiler }}
@@ -45,7 +45,6 @@ jobs:
           liblzo2-dev \
           ${{ matrix.libsdl }} \
           zlib1g-dev \
-          catch2 \
           # EOF
         echo "::endgroup::"
       env:
@@ -87,35 +86,6 @@ jobs:
       run: |
         cd build
         ctest -j $(nproc)
-
-    - name: Build Unit Test
-      run: |
-        mkdir test
-        cd test
-
-        echo "::group::CMake"
-        cmake .. \
-          ${{ matrix.extra-cmake-parameters }} \
-          -DTEST=True \
-          # EOF
-        echo "::endgroup::"
-
-        echo "::group::Build"
-        echo "Running on $(nproc) cores"
-        cmake --build . -j $(nproc)
-        echo "::endgroup::"
-
-    - name: Unit Test
-      run: |
-        cd test
-        ./openttd --reporter junit --out openttd_test_results.xml
-
-    - name: Upload Unit Test Results Artifact
-      uses: actions/upload-artifact@v2
-      if: always()
-      with:
-        name: Unit Test Results ${{ matrix.compiler }} ${{ matrix.cxxcompiler }}
-        path: test/openttd_test_results.xml
 
   macos:
     name: Mac OS
