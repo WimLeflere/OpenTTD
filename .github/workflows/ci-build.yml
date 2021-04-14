@@ -254,7 +254,7 @@ jobs:
         ./openttd.exe --reporter junit --out openttd_test_results.xml
 
     - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action/composite@v1
+      uses: EnricoMi/publish-unit-test-result-action/composite@master
       if: always()
       with:
         files: build/openttd_test_results.xml
