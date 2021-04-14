@@ -45,6 +45,7 @@ jobs:
           liblzo2-dev \
           ${{ matrix.libsdl }} \
           zlib1g-dev \
+          catch2
           # EOF
         echo "::endgroup::"
       env:
@@ -68,7 +69,7 @@ jobs:
     - name: Install GCC problem matcher
       uses: ammaraskar/gcc-problem-matcher@master
 
-    - name: Build
+    - name: Build Game
       run: |
         mkdir build
         cd build
@@ -82,10 +83,44 @@ jobs:
         cmake --build . -j $(nproc)
         echo "::endgroup::"
 
-    - name: Test
+    - name: Regression Test
       run: |
         cd build
         ctest -j $(nproc)
+
+    - name: Build Unit Tests
+      run: |
+        mkdir test
+        cd test
+
+        echo "::group::CMake"
+        cmake .. \
+          ${{ matrix.extra-cmake-parameters }} \
+          -DTEST=True
+        echo "::endgroup::"
+
+        echo "::group::Build"
+        echo "Running on $(nproc) cores"
+        cmake --build . -j $(nproc)
+        echo "::endgroup::"
+
+    - name: Unit Tests
+      run: |
+        cd test
+        ./openttd.exe --reporter junit --out openttd_test_results.xml
+
+    - name: Upload Unit Test Results Artifact
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: Unit Test Results ${{ matrix.compiler }} ${{ matrix.cxxcompiler }}
+        path: build/openttd_test_results.xml
+
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always()
+      with:
+        files: build/openttd_test_results.xml
 
   windows:
     name: Windows
@@ -257,7 +292,7 @@ jobs:
       uses: actions/upload-artifact@v2
       if: always()
       with:
-        name: Test Results (${{ matrix.os }} ${{ matrix.arch }})
+        name: Unit Test Results ${{ matrix.os }} ${{ matrix.arch }}
         path: build/openttd_test_results.xml
 
     - name: Publish Test Results
