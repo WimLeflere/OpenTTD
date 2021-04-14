@@ -107,20 +107,20 @@ jobs:
     - name: Unit Tests
       run: |
         cd test
-        ./openttd.exe --reporter junit --out openttd_test_results.xml
+        ./openttd --reporter junit --out openttd_test_results.xml
 
     - name: Upload Unit Test Results Artifact
       uses: actions/upload-artifact@v2
       if: always()
       with:
         name: Unit Test Results ${{ matrix.compiler }} ${{ matrix.cxxcompiler }}
-        path: build/openttd_test_results.xml
+        path: test/openttd_test_results.xml
 
     - name: Publish Unit Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
       if: always()
       with:
-        files: build/openttd_test_results.xml
+        files: test/openttd_test_results.xml
 
   windows:
     name: Windows
